@@ -1,6 +1,6 @@
 services:
   feed-notifier:
-    image: ghcr.io/ebalolo-bigbandconcept/feed-notifier:latest
+    image: ghcr.io/anakingig/feed-notifier:latest
     container_name: feed-notifier
     restart: unless-stopped
     env_file:

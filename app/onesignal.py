@@ -2,7 +2,6 @@ import requests
 import os
 
 APP_ID = os.getenv("ONESIGNAL_APP_ID")
-
 API_KEY = os.getenv("ONESIGNAL_API_KEY")
 
 def send(news):
