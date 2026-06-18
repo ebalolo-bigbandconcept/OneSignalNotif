@@ -2,6 +2,25 @@
 
 Service Python qui surveille un flux JSON d'articles et envoie une notification push OneSignal pour chaque nouvel élément.
 
+## Prérequis
+
+### Configuration système
+
+- **Python 3.12+** (si vous exécutez sans Docker)
+- **Docker 20.10+** et **Docker Compose 2.0+** (pour un déploiement containerisé)
+
+### Services externes
+
+- **Compte OneSignal** avec :
+  - Une application créée et active
+  - Les identifiants API (App ID et REST API Key)
+  - Au moins un abonnement/appareil actif pour recevoir les notifications
+  - Vous pouvez créer un compte gratuit sur https://onesignal.com
+
+### Configuration de l'environnement
+
+Créez un fichier `.env` à la racine du projet (voir la section [Variables d'environnement](#variables-denvironnement) pour plus de détails).
+
 ## Fonctionnement
 
 - Le service lit un flux défini par `FEED_URL`.
