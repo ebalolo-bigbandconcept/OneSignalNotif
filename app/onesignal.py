@@ -1,8 +1,11 @@
 import requests
 import os
+import logging
 
 APP_ID = os.getenv("ONESIGNAL_APP_ID")
 API_KEY = os.getenv("ONESIGNAL_API_KEY")
+
+logger = logging.getLogger(__name__)
 
 def send(news):
   payload = {
@@ -40,6 +43,7 @@ def send(news):
   data = response.json()
 
   if not data.get("id"):
+    logger.error(f"Failed to send notification for {news.title}")
     raise RuntimeError(
       f"OneSignal did not create a message: {data}"
     )

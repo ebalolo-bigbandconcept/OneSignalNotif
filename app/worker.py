@@ -1,4 +1,5 @@
 import time
+import logging
 
 from feeds import get_feed
 from storage import (
@@ -7,6 +8,8 @@ from storage import (
 )
 from onesignal import send
 from utils import html_to_text
+
+logger = logging.getLogger(__name__)
 
 SEND_DELAY_SECONDS = 60
 
@@ -26,7 +29,7 @@ def process_feed(feed_url):
     result = send(item)
     mark_sent(item.id)
 
-    print(f"Sent: {item.title} ({result['id']})")
+    logger.info(f"Sent: {item.title} ({result['id']})")
 
     # Petit délai entre deux envois.
     time.sleep(SEND_DELAY_SECONDS)
