@@ -1,40 +1,144 @@
-# Feed Notifier
+# OneSignal Notifier
 
-Service Python qui surveille un flux JSON d'articles et envoie une notification push OneSignal pour chaque nouvel élément.
+[![Build](https://github.com/ebalolo-bigbandconcept/onesignalnotif/actions/workflows/docker.yml/badge.svg)](https://github.com/ebalolo-bigbandconcept/onesignalnotif/actions/workflows/docker.yml)
+[![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Febalolo--bigbandconcept%2Fonesignalnotif-blue?logo=docker&logoColor=white)](https://ghcr.io/ebalolo-bigbandconcept/onesignalnotif:latest)
 
-## Prérequis
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)]()
+[![Docker](https://img.shields.io/badge/Docker-20.10+-2496ED?logo=docker&logoColor=white)]()
+[![Docker Compose](https://img.shields.io/badge/Docker_Compose-2.0+-2496ED?logo=docker&logoColor=white)]()
+[![SQLite](https://img.shields.io/badge/SQLite-Persistent-003B57?logo=sqlite&logoColor=white)]()
+[![OneSignal](https://img.shields.io/badge/OneSignal-Push_Notifications-EF2D5E)]()
 
-### Configuration système
+Service Python qui surveille un flux JSON d'articles et envoie automatiquement une notification push via OneSignal pour chaque nouvel élément détecté.
 
-- **Python 3.12+** (si vous exécutez sans Docker)
-- **Docker 20.10+** et **Docker Compose 2.0+** (pour un déploiement containerisé)
+---
 
-### Services externes
+# 📑 Sommaire
 
-- **Compte OneSignal** avec :
-  - Une application créée et active
-  - Les identifiants API (App ID et REST API Key)
-  - Au moins un abonnement/appareil actif pour recevoir les notifications
-  - Vous pouvez créer un compte gratuit sur https://onesignal.com
+* [Présentation](#-présentation)
+* [Fonctionnement](#-fonctionnement)
+* [Prérequis](#-prérequis)
+* [Configuration](#-configuration)
 
-### Configuration de l'environnement
+  * [Variables d'environnement](#variables-denvironnement)
+* [Format du flux attendu](#-format-du-flux-attendu)
+* [Développement](#-développement)
+* [Production](#-production)
+* [Base de données](#-base-de-données)
+* [Structure du projet](#-structure-du-projet)
+* [Dépannage](#-dépannage)
+* [Licence](#-licence)
 
-Créez un fichier `.env` à la racine du projet (voir la section [Variables d'environnement](#variables-denvironnement) pour plus de détails).
+---
 
-## Fonctionnement
+# 🚀 Présentation
 
-- Le service lit un flux défini par `FEED_URL`.
-- Il extrait les éléments du tableau `items` du JSON.
-- Chaque article déjà traité est mémorisé localement dans une base SQLite.
-- Lorsqu'un nouvel article est trouvé, une notification push est envoyée via OneSignal.
-- Un délai de 60 secondes est appliqué entre deux envois pour éviter les rafales si plusieurs articles arrivent en même temps.
-- La vérification du flux est répétée toutes les `CHECK_INTERVAL` secondes.
+One signal notif surveille périodiquement un flux JSON contenant des articles.
 
-Le stockage local est persistant dans `/data/feed.db`.
+Lorsqu'un nouvel article est détecté :
 
-## Exemple de format attendu pour le flux
+1. Son identifiant est enregistré dans une base SQLite locale.
+2. Une notification push est envoyée via OneSignal.
+3. L'article ne sera plus traité lors des exécutions suivantes.
 
-Le flux doit renvoyer un JSON avec une structure proche de celle-ci :
+Le stockage est persistant dans :
+
+```text
+/data/feed.db
+```
+
+---
+
+# ⚙️ Fonctionnement
+
+Le service exécute la boucle suivante :
+
+```text
+Flux JSON
+    │
+    ▼
+Lecture des items
+    │
+    ▼
+Vérification SQLite
+    │
+    ├── Déjà traité → Ignoré
+    │
+    └── Nouveau
+            │
+            ▼
+     Notification OneSignal
+            │
+            ▼
+      Enregistrement SQLite
+```
+
+### Comportement
+
+* Lecture du flux défini par `FEED_URL`
+* Extraction du tableau `items`
+* Détection des nouveaux articles via SQLite
+* Envoi des notifications OneSignal
+* Attente de 60 secondes entre deux notifications
+* Vérification répétée toutes les `CHECK_INTERVAL` secondes
+
+---
+
+# 📋 Prérequis
+
+## Système
+
+* Python **3.12+**
+* Docker **20.10+**
+* Docker Compose **2.0+**
+
+## Services externes
+
+### OneSignal
+
+Vous devez disposer :
+
+* d'une application active
+* d'un `App ID`
+* d'une `REST API Key`
+* d'au moins un abonnement push actif
+
+Compte gratuit disponible sur :
+
+```text
+https://onesignal.com
+```
+
+---
+
+# 🔧 Configuration
+
+Créer un fichier `.env` à la racine du projet :
+
+```env
+FEED_URL=https://www.example.com/feed.json
+CHECK_INTERVAL=300
+
+ONESIGNAL_APP_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+ONESIGNAL_API_KEY=xxxxxxxx
+```
+
+## Variables d'environnement
+
+| Variable            | Description                            |
+| ------------------- | -------------------------------------- |
+| `FEED_URL`          | URL du flux JSON à surveiller          |
+| `CHECK_INTERVAL`    | Intervalle de vérification en secondes |
+| `ONESIGNAL_APP_ID`  | Identifiant de l'application OneSignal |
+| `ONESIGNAL_API_KEY` | Clé API REST OneSignal                 |
+
+---
+
+# 📰 Format du flux attendu
+
+Le flux doit retourner un JSON contenant un tableau `items`.
+
+Exemple :
 
 ```json
 {
@@ -50,94 +154,181 @@ Le flux doit renvoyer un JSON avec une structure proche de celle-ci :
 }
 ```
 
-## Variables d'environnement
+### Champs recommandés
 
-Créer un fichier `.env` à la racine du projet :
+| Champ            | Description                        |
+| ---------------- | ---------------------------------- |
+| `id`             | Identifiant unique de l'article    |
+| `title`          | Titre affiché dans la notification |
+| `url`            | Lien vers l'article                |
+| `content_html`   | Contenu HTML                       |
+| `date_published` | Date de publication                |
 
-```env
-FEED_URL=https://www.example.com/feed.json
-CHECK_INTERVAL=300
-ONESIGNAL_APP_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-ONESIGNAL_API_KEY=xxxxxxxx
+---
+
+# 🧑‍💻 Développement
+
+Le mode développement utilise le fichier :
+
+```text
+docker-compose.dev.yml
 ```
 
-### Détail
-
-- `FEED_URL` : URL du flux JSON à surveiller.
-- `CHECK_INTERVAL` : délai entre deux vérifications du flux, en secondes.
-- `ONESIGNAL_APP_ID` : identifiant de l'application OneSignal.
-- `ONESIGNAL_API_KEY` : clé API OneSignal.
-
-## OneSignal
-
-Le service envoie les notifications via l'API REST OneSignal :
-
-- endpoint : `https://api.onesignal.com/notifications?c=push`
-- canal ciblé : `push`
-- segment ciblé : `Total Subscriptions`
-
-Le message inclut :
-
-- un titre (`headings`) en anglais et en français
-- un contenu (`contents`) en anglais et en français
-- l'URL de l'article
-
-## Installation
-
-### Développement
-
-Le plus simple est de lancer le service avec le compose de développement :
+Lancement :
 
 ```bash
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-Ce mode construit l'image localement, monte le code source et garde la base SQLite dans `./data`.
+## Caractéristiques
 
-### Production
+* Construction locale de l'image
+* Montage du code source
+* Rechargement rapide des modifications
+* Base SQLite persistante dans `./data`
 
-En production, il suffit de récupérer l'image publiée puis de lancer le compose principal :
+Arborescence :
+
+```text
+.
+├── app/
+├── data/
+├── .env
+├── docker-compose.dev.yml
+└── Dockerfile
+```
+
+---
+
+# 🚀 Production
+
+Le mode production utilise l'image publiée sur GitHub Container Registry :
+
+```text
+ghcr.io/ebalolo-bigbandconcept/onesignalnotif:latest
+```
+
+## Déploiement
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
-Le fichier `docker-compose.yml` utilise l'image `ghcr.io/anakingig/feed-notifier:latest` et monte `./data` vers `/data` pour conserver la base SQLite.
+## Caractéristiques
 
-## Base de données
+* Image précompilée
+* Déploiement simplifié
+* Persistance des données via volume Docker
+* Redémarrage automatique possible selon la configuration du compose
 
-Le fichier SQLite contient la liste des articles déjà envoyés.
+Le volume :
 
-- table `sent_news` : identifiants des notifications déjà traitées
-- fichier : `/data/feed.db`
+```text
+./data:/data
+```
 
-Supprimer ce fichier réinitialise l'historique des envois.
+permet de conserver l'historique des notifications même après redémarrage du conteneur.
 
-## Structure du projet
+---
+
+# 🗄️ Base de données
+
+Les articles déjà notifiés sont stockés dans :
+
+```text
+/data/feed.db
+```
+
+Table principale :
+
+```sql
+sent_news
+```
+
+Cette table contient les identifiants déjà envoyés afin d'éviter les doublons.
+
+### Réinitialiser l'historique
+
+Supprimer simplement :
+
+```text
+/data/feed.db
+```
+
+Au prochain démarrage, tous les articles du flux seront considérés comme nouveaux.
+
+---
+
+# 📁 Structure du projet
 
 ```text
 app/
-  feeds.py
-  main.py
-  models.py
-  onesignal.py
-  storage.py
-  utils.py
-  worker.py
+├── feeds.py
+├── main.py
+├── models.py
+├── onesignal.py
+├── storage.py
+├── utils.py
+└── worker.py
 ```
 
-## Dépannage
+### Description des modules
 
-Si aucune notification n'apparaît dans OneSignal :
+| Fichier        | Rôle                               |
+| -------------- | ---------------------------------- |
+| `main.py`      | Point d'entrée                     |
+| `worker.py`    | Boucle principale                  |
+| `feeds.py`     | Lecture du flux JSON               |
+| `onesignal.py` | Communication avec l'API OneSignal |
+| `storage.py`   | Gestion SQLite                     |
+| `models.py`    | Modèles de données                 |
+| `utils.py`     | Fonctions utilitaires              |
 
-- vérifier que `ONESIGNAL_APP_ID` et `ONESIGNAL_API_KEY` sont corrects
-- vérifier que des abonnements push existent bien dans l'application OneSignal
-- vérifier que le flux renvoie bien des `id` uniques pour chaque article
-- vérifier les logs du conteneur pour voir la réponse exacte de l'API OneSignal
+---
 
-Si le service renvoie trop d'articles d'un coup au premier lancement, c'est parce que tous les articles non présents dans la base locale sont considérés comme nouveaux.
+# 🛠️ Dépannage
 
-## Licence
+## Aucune notification reçue
 
-Aucune licence n'a été définie pour le moment.
+Vérifier :
+
+* les variables `ONESIGNAL_APP_ID` et `ONESIGNAL_API_KEY`
+* la présence d'abonnements actifs dans OneSignal
+* que chaque article possède un `id` unique
+* les logs du conteneur
+
+```bash
+docker logs <container_name>
+```
+
+## Trop de notifications au premier lancement
+
+C'est le comportement attendu.
+
+Tous les articles absents de la base SQLite sont considérés comme nouveaux et déclenchent donc un envoi.
+
+---
+
+# 🔔 Configuration OneSignal
+
+Notifications envoyées via :
+
+```text
+https://api.onesignal.com/notifications?c=push
+```
+
+Paramètres utilisés :
+
+| Paramètre | Valeur                |
+| --------- | --------------------- |
+| Canal     | `push`                |
+| Segment   | `Total Subscriptions` |
+| Langues   | Français + Anglais    |
+| URL       | Article détecté       |
+
+---
+
+# 📄 Licence
+
+Aucune licence n'est actuellement définie.
