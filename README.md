@@ -210,6 +210,8 @@ ghcr.io/ebalolo-bigbandconcept/onesignalnotif:latest
 
 ## Déploiement
 
+Le projet ce site sur le serveur `180.149.198.204` dans `/opt/notificationOneSignal/phytosol/`
+
 ```bash
 docker compose pull
 docker compose up -d
