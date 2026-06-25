@@ -6,6 +6,12 @@ APP_ID = os.getenv("ONESIGNAL_APP_ID")
 API_KEY = os.getenv("ONESIGNAL_API_KEY")
 
 def send(news):
+  description = (
+        getattr(news, "description", "") or
+        "Nouvel article disponible. "
+        "Cliquez pour en savoir plus..."
+    )
+  
   payload = {
     "app_id": APP_ID,
     "target_channel": "push",
@@ -18,8 +24,8 @@ def send(news):
       "fr": news.title
     },
     "contents": {
-      "en": news.description,
-      "fr": news.description
+      "en": description,
+      "fr": description
     },
     "url": news.url
   }
