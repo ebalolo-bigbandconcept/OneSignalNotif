@@ -1,11 +1,9 @@
 import requests
 import os
-import logging
+from config import logger
 
 APP_ID = os.getenv("ONESIGNAL_APP_ID")
 API_KEY = os.getenv("ONESIGNAL_API_KEY")
-
-logger = logging.getLogger(__name__)
 
 def send(news):
   payload = {

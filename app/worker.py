@@ -1,5 +1,4 @@
 import time
-import logging
 
 from feeds import get_feed
 from storage import (
@@ -8,8 +7,7 @@ from storage import (
 )
 from onesignal import send
 from utils import html_to_text
-
-logger = logging.getLogger(__name__)
+from config import logger
 
 SEND_DELAY_SECONDS = 60
 

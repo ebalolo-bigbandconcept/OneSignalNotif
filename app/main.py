@@ -1,14 +1,8 @@
 import time
 import os
-import logging
 from storage import init_db
 from worker import process_feed
-
-# Configuration de base du logging.
-logging.basicConfig(
-  level=logging.INFO,
-  format="%(asctime)s - %(levelname)s: %(message)s"
-)
+from config import logger
 
 # URL du flux à surveiller.
 FEED_URL = os.getenv("FEED_URL")
@@ -32,7 +26,7 @@ def main():
       process_feed(FEED_URL)
 
     except Exception as e:
-      logging.error(e)
+      logger.error(e)
 
     # Pause avant le prochain passage.
     time.sleep(INTERVAL)
