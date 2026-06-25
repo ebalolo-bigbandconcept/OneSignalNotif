@@ -3,13 +3,19 @@ services:
     image: ghcr.io/ebalolo-bigbandconcept/onesignalnotif:latest
     container_name: feed-notifier
     restart: unless-stopped
+    read_only: true
+
     env_file:
       - .env
+
     volumes:
       - ./data:/data
 
+    tmpfs:
+      - /tmp
+
     healthcheck:
-      test: ["CMD", "python", "-c", "print('ok')"]
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/proc/1/cmdline') else 1)"]
       interval: 30s
       timeout: 10s
       retries: 3
