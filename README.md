@@ -174,6 +174,13 @@ Le mode développement utilise le fichier :
 docker-compose.dev.yml
 ```
 
+Pull des fichiers :
+
+```bash
+git clone https://github.com/ebalolo-bigbandconcept/OneSignalNotif
+cd OneSignalNotif
+```
+
 Lancement :
 
 ```bash
@@ -210,12 +217,16 @@ ghcr.io/ebalolo-bigbandconcept/onesignalnotif:latest
 
 ## Déploiement
 
-Le projet ce site sur le serveur `180.149.198.204` dans `/opt/notificationOneSignal/phytosol/`
+Le projet ce trouve sur le serveur `180.149.198.204` dans `/opt/notificationOneSignal/phytosol/`
+
+Le déploiement est automatisé via un script `deploy.sh` qui effectue les étapes suivantes :
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
+
+Il suffit de faire les modifications sur [l'environement de développement](#développement), de tester et de push les changements sur le repository pour mettre à jour le serveur de production.
 
 ### Caractéristiques
 
@@ -328,9 +339,3 @@ Paramètres utilisés :
 | Segment   | `Total Subscriptions` |
 | Langues   | Français + Anglais    |
 | URL       | Article détecté       |
-
----
-
-## Licence
-
-Aucune licence n'est actuellement définie.
